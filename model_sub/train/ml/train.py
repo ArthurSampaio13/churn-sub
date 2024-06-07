@@ -91,7 +91,7 @@ y_train_prob = model_pipe.predict_proba(X_train)
 
 # %%
 acc_train = round(100 * metrics.accuracy_score(y_train, y_train_pred), 2)
-roc_train = metrics.roc_auc_score(y_train, y_train_prob[:,1])
+roc_train = round(100 * metrics.roc_auc_score(y_train, y_train_prob[:,1]), 2)
 
 print("acc_train", acc_train)
 print("roc_train", roc_train)
@@ -101,6 +101,55 @@ print("Baseline", round(1 - y_train.mean(), 2)*100)
 print("Acuraria", acc_train)
 
 # %%
+# CURVA ROC
 skplt.metrics.plot_roc(y_train, y_train_prob)
 plt.show()
 # %%
+# KS
+skplt.metrics.plot_ks_statistic(y_train, y_train_prob)
+plt.show()
+# Conseguindo separar muito bem os dados
+# %%
+# PRECISON RECALL
+skplt.metrics.plot_precision_recall(y_train, y_train_prob)
+plt.show()
+# %%
+# Os 100 primeiros tem 14x mais chance de assinar
+skplt.metrics.plot_lift_curve(y_train, y_train_prob)
+plt.show()
+# %%
+# TESTE
+y_test_pred = model_pipe.predict(X_test)
+y_test_prob = model_pipe.predict_proba(X_test)
+
+acc_test = round(100 * metrics.accuracy_score(y_test, y_test_pred), 2)
+roc_test = round(100 * metrics.roc_auc_score(y_test, y_test_prob[:,1]), 2)
+
+print("acc_train", acc_test)
+print("roc_train", roc_test)
+
+# %%
+print("Baseline", round(1 - y_test.mean(), 2)*100)
+print("Acuraria", acc_test)
+
+# %%
+# CURVA ROC
+skplt.metrics.plot_roc(y_test, y_test_prob)
+plt.show()
+# %%
+# KS
+skplt.metrics.plot_ks_statistic(y_test, y_test_prob)
+plt.show()
+# Conseguindo separar muito bem os dados
+# %%
+# PRECISON RECALL
+skplt.metrics.plot_precision_recall(y_test, y_test_prob)
+plt.show()
+# %%
+# Os 100 primeiros tem 14x mais chance de assinar
+skplt.metrics.plot_lift_curve(y_test, y_test_prob)
+plt.show()
+# %%
+# VARIAVEIS MAIS IMPORTANTES
+fs_importance = pd.DataFrame({"importabnce":model_pipe[-1].feature_importances_,
+                             "feature": X_train.columns.tolist()})
