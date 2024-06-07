@@ -1,5 +1,3 @@
-
-
 with tb_lobby as (
 
     select *
