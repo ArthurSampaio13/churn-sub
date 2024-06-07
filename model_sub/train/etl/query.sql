@@ -110,6 +110,8 @@ create table tb_abt_sub as
         t1.idPlayer = t2.idPlayer
         AND t1.dtRef < t2.dtCreatedAt
         AND t2.dtCreatedAt < date(t1.dtRef, '+15 day')
+        
     WHERE 
         t1.AssinaturaAtiva = 0
+        and t1.dtRef < date('2022-02-01', '-15 day')
 ;
