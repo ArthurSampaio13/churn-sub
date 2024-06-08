@@ -47,6 +47,14 @@ SEMMA (Sample, Explore, Modify, Model, Assess) é uma metodologia desenvolvida p
    
 ![SEMMA](https://documentation.sas.com/api/docsets/emref/14.3/content/images/semma.png?locale=en)
 
+## Processo de ETL
+
+O processo de ETL (Extract, Transform, Load) completo é realizado para garantir a preparação adequada dos dados. As etapas incluem:
+
+1. **Extração:** Extração dos dados do banco de dados GC.
+2. **Transformação:** Criação de aproximadamente 60 features (variáveis) para alimentar o modelo preditivo. Estas features são calculadas a partir dos dados brutos extraídos.
+3. **Carregamento:** Transformação dos dados com o modelo treinado e armazenamento dos scores de chance de assinatura no banco de dados.
+
 ## Estrutura do Projeto
 
 O projeto está organizado nas seguintes pastas principais:
@@ -59,6 +67,7 @@ O projeto está organizado nas seguintes pastas principais:
   - **ml:** Scripts de predição e avaliação dos modelos.
 - **train:** Scripts e queries SQL para o treinamento dos modelos.
   - Inclui a preparação dos dados para treinamento e os scripts de modelagem.
+  - **etl:** Contém a query SQL (`query.sql`) que define a ABT (Analytical Base Table) com todas as informações necessárias para o treinamento do modelo.
 - **models:** Modelos preditivos treinados salvos em formato pickle.
 
 
