@@ -1,45 +1,45 @@
 # %%
 import pandas as pd
 
-
 import sqlalchemy
 import sqlite3
 
-
 from sklearn import model_selection
-from feature_engine import imputation
 
+from feature_engine import imputation
 from feature_engine import encoding
 
-
 from sklearn import ensemble
-from sklearn import tree
-from sklearn import linear_model
-
 
 from sklearn import pipeline
 from sklearn import metrics
 
-import scikitplot as skplt
-import matplotlib.pyplot as plt
-
-pd.set_option('display.max_columns', None)
+def report_model(X, y, model, metric, is_prob=True):
+    if is_prob:
+        y_pred = model.predict_proba(X)[:,1]
+    else:
+        y_pred = metric.predict(X)
+    res = metric(y, y_pred)
+    return res
 
 # %%
 # SAMPLE
+print("Importando ABT...")
 engine = sqlalchemy.create_engine("sqlite:///../../../data/gc.db")
 conn = sqlite3.connect("../../../data/gc.db")
 query = "SELECT * FROM tb_abt_sub"
+print("OK.")
 
 df = pd.read_sql_query(query, conn)
 # %%
+print("Separando em treinamento e back test...")
 
 #Out of time - Back Test
 dt_oot = df[df['dtRef'].isin(['2022-01-01','2021-12-31'])].copy()
 # %%
 
 df_train = df[~df['dtRef'].isin(['2022-01-01','2021-12-31'])].copy()
-df_train
+print("OK.")
 # %%
 
 features = df_train.columns.to_list()[2:-1]
@@ -47,17 +47,20 @@ target = 'flagSub'
 
 df_train
 # %%
-
+print("Separando em treinamento e teste....")
 X_train, X_test, y_train, y_test = model_selection.train_test_split(df_train[features], df_train[target], test_size=0.2, random_state=42)
+print("Ok")
 # %%
 #EXPLORE
 
 cat_features = X_train.dtypes[X_train.dtypes=='object'].index.tolist()
 num_features = list(set(X_train.columns) - set(cat_features))
-# %%
+# %%.
 # Missing numericos
+print("Estatistica de missing...")
 is_na = X_train[num_features].isna().sum()
 is_na[is_na > 0]
+print("OK.")
 # %%
 
 missing_0 = ['avgKDA']
@@ -65,11 +68,14 @@ missing_1 = ['winRateDust2', 'vlIdade', 'winRateOverpass', 'winRateInferno', 'wi
 
 # %%
 # Missing categoricos
+print("Estatistica de missing...")
 is_na = X_train[cat_features].isna().sum()
 is_na
+print("OK.")
 # %%
 # MODIFY
 # Input missing_1
+print("Construindo pipeline de ML...")
 imput_1 = imputation.ArbitraryNumberImputer(arbitrary_number=-1, variables=missing_1)
 # Input missing_0
 imput_0 = imputation.ArbitraryNumberImputer(arbitrary_number=0, variables=missing_0)
@@ -88,32 +94,20 @@ rf_clf = ensemble.RandomForestClassifier(n_estimators=200,
                                          min_samples_leaf=50, 
                                          n_jobs=-1, 
                                          random_state=42)
-
-ada_clf = ensemble.AdaBoostClassifier(n_estimators=200, 
-                                      learning_rate=0.8, 
-                                      random_state=42)
-
-dt_clf = tree.DecisionTreeClassifier(max_depth=15,
-                                     min_samples_leaf=50,
-                                     random_state=42)
-
-rl_clf = linear_model.LogisticRegressionCV(cv=4, 
-                                           n_jobs=-1)
+print("OK.")
 # %%
 # PIPELINE COM GRIDSEARCH
 
-param_grid = {'n_estimators':[50,100,200,250],
-                                    'min_samples_leaf':[5,10,50,100]}
+param_grid = {'n_estimators':[200, 250],
+                                    'min_samples_leaf':[5, 10]}
 
 grid_search = model_selection.GridSearchCV(rf_clf, 
                              param_grid, 
                              n_jobs=1, 
                              cv=4, 
                              scoring='roc_auc',
-                             verbose=3,
+                             verbose=0,
                              refit=True)
-
-#{'min_samples_leaf': 5, 'n_estimators': 250}
 
 pipeline_rf = pipeline.Pipeline(steps=[("imput 0", imput_0),
                                       ("imput -1", imput_1),
@@ -121,104 +115,48 @@ pipeline_rf = pipeline.Pipeline(steps=[("imput 0", imput_0),
                                       ("Modelo", grid_search)])
 
 # %%
-
-def train_test_report(modelo, X_train, y_train, X_test, y_test, key_metric, is_prob=True):
-    modelo.fit(X_train, y_train)
-    pred = modelo.predict(X_test)
-    proba = modelo.predict_proba(X_test)
-    
-    metric_result = key_metric(y_test, proba[:,1]) if is_prob else key_metric(y_test, pred)
-    
-    return metric_result
-    
-
-# %%
-
+print("Encontrando o melhor modelo com grid...")
 pipeline_rf.fit(X_train, y_train)
+print("OK")
 
 # %%
-pd.DataFrame(grid_search.cv_results_).sort_values(by="rank_test_score")
+
 
 # %%
-# METRICAS
-y_train_pred = pipeline_rf.predict(X_train)
-y_train_prob = pipeline_rf.predict_proba(X_train)
+print("Analisando metricas...")
+auc_train = report_model(X_train, y_train, pipeline_rf, metrics.roc_auc_score)
+auc_test = report_model(X_test, y_test, pipeline_rf, metrics.roc_auc_score)
+auc_oot = report_model(dt_oot[features], dt_oot[target], pipeline_rf, metrics.roc_auc_score)
+
+print("auc_train:",auc_train)
+print("auc_test:",auc_test)
+print("auc_oot:",auc_oot)
+
+
+print("OK.") 
+# %%
+print("Ajustar o modelo para a base toda...")
+
+pipeline_model = pipeline.Pipeline(steps=[("imput 0", imput_0),
+                                      ("imput -1", imput_1),
+                                      ("onehot", onehot),
+                                      ("Modelo", grid_search.best_estimator_)])
+pipeline_model.fit(df[features], df[target])
+print("OK")
+# %%
+print("Feature importance by model...")
+features_transformed = pipeline_model[:-1].transform(df[features]).columns.tolist()
+feature_importance = pd.DataFrame(pipeline_model[-1].feature_importances_, index=features_transformed).sort_values(ascending=False, by=0)
+feature_importance
+print("Ok.")
 
 # %%
-acc_train = round(100 * metrics.accuracy_score(y_train, y_train_pred), 2)
-roc_train = round(100 * metrics.roc_auc_score(y_train, y_train_prob[:,1]), 2)
+series_model = pd.Series(
+    {'model': pipeline_model,
+    'feature':features,
+    "auc_train":auc_train,
+    "auc_test":auc_test,
+    "auc_oot": auc_oot}
+)
 
-print("acc_train", acc_train)
-print("roc_train", roc_train)
-
-# %%
-print("Baseline", round(1 - y_train.mean(), 2)*100)
-print("Acuraria", acc_train)
-
-# %%
-# CURVA ROC
-skplt.metrics.plot_roc(y_train, y_train_prob)
-plt.show()
-# %%
-# KS
-skplt.metrics.plot_ks_statistic(y_train, y_train_prob)
-plt.show()
-# Conseguindo separar muito bem os dados
-# %%
-# PRECISON RECALL
-skplt.metrics.plot_precision_recall(y_train, y_train_prob)
-plt.show()
-# %%
-# Os 100 primeiros tem 14x mais chance de assinar
-skplt.metrics.plot_lift_curve(y_train, y_train_prob)
-plt.show()
-# %%
-# TESTE
-y_test_pred = pipeline_rf.predict(X_test)
-y_test_prob = pipeline_rf.predict_proba(X_test)
-
-acc_test = round(100 * metrics.accuracy_score(y_test, y_test_pred), 2)
-roc_test = round(100 * metrics.roc_auc_score(y_test, y_test_prob[:,1]), 2)
-
-print("acc_train", acc_test)
-print("roc_train", roc_test)
-
-# %%
-print("Baseline", round(1 - y_test.mean(), 2)*100)
-print("Acuraria", acc_test)
-
-# %%
-# CURVA ROC
-skplt.metrics.plot_roc(y_test, y_test_prob)
-plt.show()
-# %%
-# KS
-skplt.metrics.plot_ks_statistic(y_test, y_test_prob)
-plt.show()
-# Conseguindo separar muito bem os dados
-# %%
-# PRECISON RECALL
-skplt.metrics.plot_precision_recall(y_test, y_test_prob)
-plt.show()
-# %%
-# Os 100 primeiros tem 14x mais chance de assinar
-skplt.metrics.plot_lift_curve(y_test, y_test_prob)
-plt.show()
-# %%
-skplt.metrics.plot_cumulative_gain(y_test,y_test_prob)
-plt.show()
-# %%
-### Testando na OOT para ver se descolou
-X_oot, y_oot = dt_oot[features], dt_oot[target]
-
-y_prob_oot = pipeline_rf.predict_proba(X_oot)
-
-roc_oot = round(100 * metrics.roc_auc_score(y_oot, y_prob_oot[:,1]), 2)
-
-print("roc_train", roc_oot)
-
-skplt.metrics.plot_lift_curve(y_oot, y_prob_oot)
-plt.show()
-# %%
-skplt.metrics.plot_cumulative_gain(y_oot,y_prob_oot)
-plt.show()
+series_model.to_pickle("../../../models/modelo_sub.pkl")
