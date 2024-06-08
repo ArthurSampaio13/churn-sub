@@ -44,6 +44,7 @@ SEMMA (Sample, Explore, Modify, Model, Assess) é uma metodologia desenvolvida p
 3. **Modify:** Modificação e transformação dos dados.
 4. **Model:** Construção dos modelos preditivos.
 5. **Assess:** Avaliação dos modelos.
+   
 ![SEMMA](https://documentation.sas.com/api/docsets/emref/14.3/content/images/semma.png?locale=en)
 
 ## Estrutura do Projeto
