@@ -44,6 +44,7 @@ SEMMA (Sample, Explore, Modify, Model, Assess) é uma metodologia desenvolvida p
 3. **Modify:** Modificação e transformação dos dados.
 4. **Model:** Construção dos modelos preditivos.
 5. **Assess:** Avaliação dos modelos.
+![SEMMA](https://documentation.sas.com/api/docsets/emref/14.3/content/images/semma.png?locale=en)
 
 ## Estrutura do Projeto
 
@@ -59,12 +60,4 @@ O projeto está organizado nas seguintes pastas principais:
   - Inclui a preparação dos dados para treinamento e os scripts de modelagem.
 - **models:** Modelos preditivos treinados salvos em formato pickle.
 
-## Objetivos do Curso
 
-Este curso foi desenvolvido para demonstrar como algoritmos podem ajudar a resolver problemas de negócios reais. Além disso, abordaremos as dificuldades e as etapas de preparação de dados necessárias para desenvolver uma solução completa (end-to-end).
-
-## Instruções para Configuração do Ambiente
-
-1. Clone o repositório:
-   ```sh
-   git clone https://github.com/seu-usuario/seu-repositorio.git
