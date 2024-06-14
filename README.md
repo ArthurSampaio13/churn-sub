@@ -4,22 +4,6 @@
 
 Este projeto visa desenvolver e implementar algoritmos de predição para resolver problemas reais de negócio na GC. Utilizando as metodologias CRISP-DM para o desenvolvimento e SEMMA para a modelagem dos dados, pretendemos abordar diversas oportunidades de solução.
 
-## Oportunidades de Solução
-
-Dentro deste projeto, identificamos várias oportunidades de solução que abordaremos:
-
-1. **Predição de jogadores que jogarão na próxima semana/mês:**
-   - Identificar quais jogadores estarão ativos em determinados períodos.
-
-2. **Predição de churn:**
-   - Prever quais jogadores estão propensos a abandonar o jogo.
-
-3. **Predição de assinatura:**
-   - Estimar quais usuários têm maior probabilidade de se tornarem assinantes.
-
-4. **Predição de churn de assinatura:**
-   - Antecipar quais assinantes podem cancelar suas assinaturas.
-
 ## Metodologia
 
 ### CRISP-DM
